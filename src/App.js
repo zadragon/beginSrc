@@ -1,33 +1,59 @@
 import { useState, useEffect } from "react";
 
 function App() {
-  const [toDo, setToDo] = useState("");
-  const [toDoList, setToDoList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [coins, setCoins] = useState([]);
+  const [money, setMoney] = useState("");
+  const [selectCoin, setSelectCoin] = useState("");
+  const [calcCoin, setCalcCoin] = useState("");
 
-  const onChange = (e) => {
-    setToDo(e.target.value);
+  const onChangeMoney = (e) => {
+    setMoney(e.target.value);
   };
-  const addTodo = (e) => {
+  const onChangeCoin = (e) => {
+    console.log(e.target.value);
+    setSelectCoin(e.target.value);
+  };
+  const onSubmit = (e) => {
     e.preventDefault();
-    if (toDo === "") {
-      return;
-    }
-    setToDoList((prev) => [toDo, ...prev]);
-    setToDo("");
+
+    const percent = money / selectCoin;
+
+    setCalcCoin(1 * percent);
   };
 
+  useEffect(() => {
+    fetch("https://api.coinpaprika.com/v1/tickers")
+      .then((response) => response.json())
+      .then((json) => {
+        setCoins(json);
+        setLoading(false);
+      });
+  }, []);
   return (
     <div>
-      todo 갯수 {toDoList.length}
-      <form onSubmit={addTodo}>
-        <input type="text" placeholder="Write your to do..." value={toDo} onChange={onChange} />
-        <button type="submit">추가</button>
+      <h1>The Coins! ({coins.length})</h1>
+      {loading ? <strong>Loading...</strong> : null}
+
+      <form onSubmit={onSubmit}>
+        <label>코인을 선택해주세요.</label>
+        <select onChange={onChangeCoin}>
+          <option value={0}>코인을 선택해주세요.</option>
+          {coins.map((item, index) => (
+            <option key={index} value={item.quotes.USD.price}>
+              {item.name} {item.symbol} (${item.quotes.USD.price})
+            </option>
+          ))}
+        </select>
+        <hr />
+        <label>금액을 선택해주세요.</label>
+        <div>
+          <input type="number" value={money} onChange={onChangeMoney} />
+          <button type="submit">달러 당 코인 계산</button>
+        </div>
+        <hr />
+        {calcCoin && `${money}달러 당 ${calcCoin}개`}
       </form>
-      <ul>
-        {toDoList.map((item, index) => {
-          return <li key={index}>{item}</li>;
-        })}
-      </ul>
     </div>
   );
 }
